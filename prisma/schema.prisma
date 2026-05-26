@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CompanyStatus {
+  active
+  inactive
+  suspended
+}
+
+enum CompanyPlan {
+  starter
+  growth
+  enterprise
+}
+
+enum MemberRole {
+  owner
+  admin
+  finance
+  operator
+}
+
+enum MemberStatus {
+  invited
+  active
+  inactive
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  login
+  logout
+}
+
+model Company {
+  id        String        @id @default(cuid())
+  name      String
+  slug      String        @unique
+  status    CompanyStatus @default(active)
+  plan      CompanyPlan   @default(starter)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  members   CompanyMember[]
+  auditLogs AuditLog[]
+
+  @@map("companies")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memberships CompanyMember[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model CompanyMember {
+  id        String       @id @default(cuid())
+  companyId String      @map("company_id")
+  userId    String      @map("user_id")
+  role      MemberRole  @default(operator)
+  status    MemberStatus @default(active)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([companyId, role])
+  @@index([userId])
+  @@map("company_members")
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  companyId String?    @map("company_id")
+  userId    String?    @map("user_id")
+  action    AuditAction
+  entity    String
+  entityId  String?    @map("entity_id")
+  metadata  Json?
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
