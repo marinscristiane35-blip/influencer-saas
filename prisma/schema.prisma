@@ -40,6 +40,20 @@ enum AuditAction {
   logout
 }
 
+enum InfluencerStatus {
+  active
+  invited
+  paused
+  declined
+}
+
+enum CampaignStatus {
+  draft
+  active
+  paused
+  finished
+}
+
 model Company {
   id        String        @id @default(cuid())
   name      String
@@ -49,8 +63,10 @@ model Company {
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
 
-  members   CompanyMember[]
-  auditLogs AuditLog[]
+  members     CompanyMember[]
+  auditLogs   AuditLog[]
+  influencers Influencer[]
+  campaigns   Campaign[]
 
   @@map("companies")
 }
@@ -69,14 +85,59 @@ model User {
   @@map("users")
 }
 
+model Influencer {
+  id         String           @id @default(cuid())
+  companyId  String           @map("company_id")
+  name       String
+  email      String
+  phone      String?
+  instagram  String?
+  status     InfluencerStatus @default(invited)
+  couponCode String?          @map("coupon_code")
+  notes      String?
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, email])
+  @@unique([companyId, instagram])
+  @@unique([companyId, couponCode])
+  @@index([companyId, status])
+  @@index([companyId, createdAt])
+  @@map("influencers")
+}
+
+model Campaign {
+  id            String         @id @default(cuid())
+  companyId     String         @map("company_id")
+  name          String
+  description   String?
+  objective     String?
+  status        CampaignStatus @default(draft)
+  startsAt      DateTime?      @map("starts_at")
+  endsAt        DateTime?      @map("ends_at")
+  plannedBudget Decimal?       @map("planned_budget") @db.Decimal(12, 2)
+  notes         String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status])
+  @@index([companyId, startsAt])
+  @@index([companyId, createdAt])
+  @@map("campaigns")
+}
+
 model CompanyMember {
   id        String       @id @default(cuid())
-  companyId String      @map("company_id")
-  userId    String      @map("user_id")
-  role      MemberRole  @default(operator)
+  companyId String       @map("company_id")
+  userId    String       @map("user_id")
+  role      MemberRole   @default(operator)
   status    MemberStatus @default(active)
-  createdAt DateTime    @default(now()) @map("created_at")
-  updatedAt DateTime    @updatedAt @map("updated_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -89,13 +150,13 @@ model CompanyMember {
 
 model AuditLog {
   id        String      @id @default(cuid())
-  companyId String?    @map("company_id")
-  userId    String?    @map("user_id")
+  companyId String?     @map("company_id")
+  userId    String?     @map("user_id")
   action    AuditAction
   entity    String
-  entityId  String?    @map("entity_id")
+  entityId  String?     @map("entity_id")
   metadata  Json?
-  createdAt DateTime   @default(now()) @map("created_at")
+  createdAt DateTime    @default(now()) @map("created_at")
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
   user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)

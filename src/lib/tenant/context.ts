@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 
-export async function requireTenant() {
+async function findTenant() {
   const session = await getSession();
 
   if (!session) {
-    redirect("/login");
+    return null;
   }
 
   const membership = await prisma.companyMember.findFirst({
@@ -22,7 +22,7 @@ export async function requireTenant() {
   });
 
   if (!membership) {
-    redirect("/login");
+    return null;
   }
 
   return {
@@ -32,4 +32,24 @@ export async function requireTenant() {
     company: membership.company,
     user: membership.user,
   };
+}
+
+export async function getTenant() {
+  const session = await getSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  return findTenant();
+}
+
+export async function requireTenant() {
+  const tenant = await getTenant();
+
+  if (!tenant) {
+    redirect("/login");
+  }
+
+  return tenant;
 }
