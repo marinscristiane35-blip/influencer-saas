@@ -1,10 +1,23 @@
 "use client";
 
 import { useActionState } from "react";
-import { loginAction } from "@/app/actions/auth";
 
-export function LoginForm() {
-  const [state, formAction, pending] = useActionState(loginAction, null);
+type LoginFormState = {
+  error?: string;
+} | null;
+
+type LoginFormProps = {
+  action: (state: LoginFormState, formData: FormData) => Promise<LoginFormState>;
+  notice?: string;
+  submitLabel?: string;
+};
+
+export function LoginForm({
+  action,
+  notice,
+  submitLabel = "Entrar",
+}: LoginFormProps) {
+  const [state, formAction, pending] = useActionState(action, null);
 
   return (
     <form action={formAction} className="form">
@@ -24,9 +37,9 @@ export function LoginForm() {
       </div>
       {state?.error ? <p className="error">{state.error}</p> : null}
       <button className="button" type="submit" disabled={pending}>
-        {pending ? "Entrando..." : "Entrar"}
+        {pending ? "Entrando..." : submitLabel}
       </button>
-      <p className="notice">Usuario seed: admin@influencersaas.local / admin123456</p>
+      {notice ? <p className="notice">{notice}</p> : null}
     </form>
   );
 }

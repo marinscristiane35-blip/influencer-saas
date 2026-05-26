@@ -2,13 +2,20 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
 export type SessionPayload = {
+  sessionType: "saas_admin" | "company_user" | "influencer";
   userId: string;
-  companyId: string;
+  companyId?: string;
+  influencerId?: string;
   role: string;
   expiresAt: number;
 };
 
-const cookieName = "influencer_saas_session";
+const cookieNames = {
+  company_user: "influencer_saas_company_session",
+  influencer: "influencer_saas_influencer_session",
+  saas_admin: "influencer_saas_admin_session",
+} satisfies Record<SessionPayload["sessionType"], string>;
+
 const sessionTtlMs = 1000 * 60 * 60 * 24 * 7;
 
 function getSessionSecret() {
@@ -67,7 +74,7 @@ export async function createSession(input: Omit<SessionPayload, "expiresAt">) {
   const cookieStore = await cookies();
   const expiresAt = Date.now() + sessionTtlMs;
 
-  cookieStore.set(cookieName, encodeSession({ ...input, expiresAt }), {
+  cookieStore.set(cookieNames[input.sessionType], encodeSession({ ...input, expiresAt }), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -76,12 +83,34 @@ export async function createSession(input: Omit<SessionPayload, "expiresAt">) {
   });
 }
 
-export async function getSession() {
+export async function getSession(sessionType?: SessionPayload["sessionType"]) {
   const cookieStore = await cookies();
-  return decodeSession(cookieStore.get(cookieName)?.value);
+
+  if (sessionType) {
+    const session = decodeSession(cookieStore.get(cookieNames[sessionType])?.value);
+    return session?.sessionType === sessionType ? session : null;
+  }
+
+  for (const cookieName of Object.values(cookieNames)) {
+    const session = decodeSession(cookieStore.get(cookieName)?.value);
+
+    if (session) {
+      return session;
+    }
+  }
+
+  return null;
 }
 
-export async function destroySession() {
+export async function destroySession(sessionType?: SessionPayload["sessionType"]) {
   const cookieStore = await cookies();
-  cookieStore.delete(cookieName);
+
+  if (sessionType) {
+    cookieStore.delete(cookieNames[sessionType]);
+    return;
+  }
+
+  for (const cookieName of Object.values(cookieNames)) {
+    cookieStore.delete(cookieName);
+  }
 }

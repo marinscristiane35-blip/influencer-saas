@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logoutAction } from "@/app/actions/auth";
+import { companyLogoutAction } from "@/app/actions/auth";
 
 const links = [
   { href: "/dashboard", label: "Visao geral" },
@@ -32,7 +32,7 @@ export function DashboardNav() {
           </Link>
         ))}
       </div>
-      <form action={logoutAction}>
+      <form action={companyLogoutAction}>
         <button className="dashboard-logout" type="submit">
           Sair
         </button>

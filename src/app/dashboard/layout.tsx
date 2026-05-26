@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { logoutAction } from "@/app/actions/auth";
+import { companyLogoutAction } from "@/app/actions/auth";
 import { getTenant } from "@/lib/tenant/context";
 import { DashboardNav } from "@/components/dashboard-nav";
 
@@ -20,7 +20,7 @@ export default async function DashboardLayout({
             Seu usuario esta autenticado, mas ainda nao possui uma empresa ativa
             para operar. Peca a um administrador para vincular sua conta.
           </p>
-          <form action={logoutAction}>
+          <form action={companyLogoutAction}>
             <button className="button" type="submit">
               Sair
             </button>
@@ -53,7 +53,7 @@ export default async function DashboardLayout({
             <p className="eyebrow">Workspace</p>
             <h1>{tenant.company.name}</h1>
           </div>
-          <Link className="admin-chip" href="/admin">
+          <Link className="admin-chip" href="/saas-admin">
             Admin global
           </Link>
         </div>

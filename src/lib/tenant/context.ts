@@ -3,9 +3,9 @@ import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 
 async function findTenant() {
-  const session = await getSession();
+  const session = await getSession("company_user");
 
-  if (!session) {
+  if (!session?.companyId) {
     return null;
   }
 
@@ -35,10 +35,10 @@ async function findTenant() {
 }
 
 export async function getTenant() {
-  const session = await getSession();
+  const session = await getSession("company_user");
 
   if (!session) {
-    redirect("/login");
+    redirect("/empresa/login");
   }
 
   return findTenant();
@@ -48,7 +48,7 @@ export async function requireTenant() {
   const tenant = await getTenant();
 
   if (!tenant) {
-    redirect("/login");
+    redirect("/empresa/login");
   }
 
   return tenant;
