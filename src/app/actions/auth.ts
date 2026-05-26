@@ -6,10 +6,15 @@ import { createSession, destroySession } from "@/lib/auth/session";
 import { verifyPassword } from "@/lib/auth/password";
 import { normalizeEmail } from "@/lib/auth/email";
 import { prisma } from "@/lib/database/prisma";
+import { findInfluencerForLogin } from "@/lib/influencers/repository";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+});
+
+const influencerLoginSchema = z.object({
+  email: z.string().email(),
 });
 
 function getAllowedSaasAdminEmails() {
@@ -118,4 +123,34 @@ export async function companyLogoutAction() {
 export async function saasAdminLogoutAction() {
   await destroySession("saas_admin");
   redirect("/saas-admin/login");
+}
+
+export async function influencerLoginAction(_: unknown, formData: FormData) {
+  const parsed = influencerLoginSchema.safeParse({
+    email: formData.get("email"),
+  });
+
+  if (!parsed.success) {
+    return { error: "Informe um e-mail valido." };
+  }
+
+  const influencer = await findInfluencerForLogin(normalizeEmail(parsed.data.email));
+
+  if (!influencer) {
+    return { error: "Influenciador nao encontrado ou sem acesso ao portal." };
+  }
+
+  await createSession({
+    companyId: influencer.company_id,
+    influencerId: influencer.id,
+    role: "influencer",
+    sessionType: "influencer",
+  });
+
+  redirect("/portal");
+}
+
+export async function influencerLogoutAction() {
+  await destroySession("influencer");
+  redirect("/portal/login");
 }

@@ -62,6 +62,10 @@ textarea {
   padding: 22px;
 }
 
+.portal-sidebar {
+  background: #fbfcf8;
+}
+
 .dashboard-brand {
   align-items: center;
   display: flex;
@@ -530,6 +534,21 @@ h2 {
   border-left: 3px solid var(--accent);
   color: var(--muted);
   padding-left: 12px;
+}
+
+.import-summary {
+  background: #f8faf6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 12px;
+}
+
+.import-summary span {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .error {

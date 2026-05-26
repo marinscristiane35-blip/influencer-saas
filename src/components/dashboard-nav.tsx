@@ -8,6 +8,7 @@ const links = [
   { href: "/dashboard", label: "Visao geral" },
   { href: "/dashboard/influenciadores", label: "Influenciadores" },
   { href: "/dashboard/campanhas", label: "Campanhas" },
+  { href: "/dashboard/financeiro", label: "Financeiro" },
   { href: "/dashboard/configuracoes", label: "Configuracoes" },
 ];
 

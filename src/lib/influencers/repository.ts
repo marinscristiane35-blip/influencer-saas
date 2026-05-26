@@ -17,6 +17,11 @@ export type InfluencerRow = {
   updated_at: Date;
 };
 
+export type InfluencerPortalRow = InfluencerRow & {
+  company_name: string;
+  company_slug: string;
+};
+
 export async function listInfluencersByCompany(companyId: string) {
   return prisma.$queryRaw<InfluencerRow[]>`
     SELECT
@@ -78,6 +83,8 @@ export async function createInfluencer(input: {
   couponCode: string | null;
   notes: string | null;
 }) {
+  const id = randomUUID();
+
   await prisma.$executeRaw`
     INSERT INTO influencers (
       id,
@@ -92,7 +99,7 @@ export async function createInfluencer(input: {
       updated_at
     )
     VALUES (
-      ${randomUUID()},
+      ${id},
       ${input.companyId},
       ${input.name},
       ${input.email},
@@ -104,4 +111,63 @@ export async function createInfluencer(input: {
       now()
     )
   `;
+
+  return { id };
+}
+
+export async function findInfluencerForLogin(email: string) {
+  const rows = await prisma.$queryRaw<InfluencerPortalRow[]>`
+    SELECT
+      influencers.id,
+      influencers.company_id,
+      influencers.name,
+      influencers.email,
+      influencers.phone,
+      influencers.instagram,
+      influencers.status,
+      influencers.coupon_code,
+      influencers.notes,
+      influencers.created_at,
+      influencers.updated_at,
+      companies.name AS company_name,
+      companies.slug AS company_slug
+    FROM influencers
+    INNER JOIN companies ON companies.id = influencers.company_id
+    WHERE influencers.email = ${email}
+      AND influencers.status IN ('active', 'invited')
+    ORDER BY influencers.created_at ASC
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function findInfluencerPortalContext(input: {
+  companyId: string;
+  influencerId: string;
+}) {
+  const rows = await prisma.$queryRaw<InfluencerPortalRow[]>`
+    SELECT
+      influencers.id,
+      influencers.company_id,
+      influencers.name,
+      influencers.email,
+      influencers.phone,
+      influencers.instagram,
+      influencers.status,
+      influencers.coupon_code,
+      influencers.notes,
+      influencers.created_at,
+      influencers.updated_at,
+      companies.name AS company_name,
+      companies.slug AS company_slug
+    FROM influencers
+    INNER JOIN companies ON companies.id = influencers.company_id
+    WHERE influencers.id = ${input.influencerId}
+      AND influencers.company_id = ${input.companyId}
+      AND influencers.status IN ('active', 'invited')
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
 }

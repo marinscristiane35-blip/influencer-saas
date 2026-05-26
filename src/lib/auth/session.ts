@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 export type SessionPayload = {
   sessionType: "saas_admin" | "company_user" | "influencer";
-  userId: string;
+  userId?: string;
   companyId?: string;
   influencerId?: string;
   role: string;

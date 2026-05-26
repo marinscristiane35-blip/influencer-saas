@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "commission_events_company_id_influencer_id_competence_year_comp" RENAME TO "commission_events_company_id_influencer_id_competence_year__idx";

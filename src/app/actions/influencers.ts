@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { normalizeEmail } from "@/lib/auth/email";
+import { createInfluencerCoupon } from "@/lib/financial/repository";
 import {
   createInfluencer,
   findInfluencerDuplicate,
@@ -73,7 +74,7 @@ export async function createInfluencerAction(_: unknown, formData: FormData) {
     };
   }
 
-  await createInfluencer({
+  const influencer = await createInfluencer({
     companyId: tenant.companyId,
     name: parsed.data.name,
     email,
@@ -83,6 +84,14 @@ export async function createInfluencerAction(_: unknown, formData: FormData) {
     couponCode,
     notes: emptyToNull(parsed.data.notes),
   });
+
+  if (couponCode) {
+    await createInfluencerCoupon({
+      code: couponCode,
+      companyId: tenant.companyId,
+      influencerId: influencer.id,
+    });
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/influenciadores");
