@@ -185,6 +185,62 @@ export async function createInfluencerCoupon(input: {
   return rows[0] ?? null;
 }
 
+export async function syncInfluencerPrimaryCoupon(input: {
+  companyId: string;
+  influencerId: string;
+  code: string | null;
+}) {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`
+      UPDATE influencer_coupons
+      SET status = 'inactive',
+          updated_at = now()
+      WHERE company_id = ${input.companyId}
+        AND influencer_id = ${input.influencerId}
+    `;
+
+    if (!input.code) {
+      return null;
+    }
+
+    const rows = await tx.$queryRaw<InfluencerCouponRow[]>`
+      INSERT INTO influencer_coupons (
+        id,
+        company_id,
+        influencer_id,
+        code,
+        status,
+        updated_at
+      )
+      VALUES (
+        ${randomUUID()},
+        ${input.companyId},
+        ${input.influencerId},
+        ${input.code},
+        'active',
+        now()
+      )
+      ON CONFLICT (company_id, code)
+      DO UPDATE SET
+        influencer_id = EXCLUDED.influencer_id,
+        status = 'active',
+        updated_at = now()
+      RETURNING
+        id,
+        company_id,
+        influencer_id,
+        code,
+        status,
+        starts_at,
+        ends_at,
+        created_at,
+        updated_at
+    `;
+
+    return rows[0] ?? null;
+  });
+}
+
 export async function findCommissionEventBySource(input: {
   companyId: string;
   sourceType: CommissionSourceType;

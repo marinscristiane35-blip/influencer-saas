@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireTenant } from "@/lib/tenant/context";
+import { requireSaasAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/database/prisma";
 
 const companySchema = z.object({
@@ -14,11 +14,7 @@ const companySchema = z.object({
 });
 
 export async function createCompanyAction(_: unknown, formData: FormData) {
-  const tenant = await requireTenant();
-
-  if (tenant.role !== "owner") {
-    return { error: "Apenas proprietarios podem cadastrar empresas." };
-  }
+  await requireSaasAdmin();
 
   const parsed = companySchema.safeParse({
     name: formData.get("name"),
@@ -33,16 +29,9 @@ export async function createCompanyAction(_: unknown, formData: FormData) {
     data: {
       name: parsed.data.name,
       slug: parsed.data.slug,
-      members: {
-        create: {
-          userId: tenant.userId,
-          role: "owner",
-          status: "active",
-        },
-      },
     },
   });
 
-  revalidatePath("/admin/empresas");
+  revalidatePath("/saas-admin/empresas");
   return { success: "Empresa cadastrada." };
 }

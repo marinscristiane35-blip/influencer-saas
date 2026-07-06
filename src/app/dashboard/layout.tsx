@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { companyLogoutAction } from "@/app/actions/auth";
 import { getTenant } from "@/lib/tenant/context";
+import { roleLabels } from "@/lib/auth/permissions";
 import { DashboardNav } from "@/components/dashboard-nav";
 
 export default async function DashboardLayout({
@@ -43,9 +43,9 @@ export default async function DashboardLayout({
         <div className="tenant-card">
           <p className="eyebrow">Empresa atual</p>
           <strong>{tenant.company.name}</strong>
-          <span>{tenant.company.slug}</span>
+          <span>{roleLabels[tenant.role] ?? tenant.role}</span>
         </div>
-        <DashboardNav />
+        <DashboardNav permissions={[...tenant.permissions]} />
       </aside>
       <main className="content dashboard-content">
         <div className="topbar dashboard-topbar">
@@ -53,9 +53,7 @@ export default async function DashboardLayout({
             <p className="eyebrow">Workspace</p>
             <h1>{tenant.company.name}</h1>
           </div>
-          <Link className="admin-chip" href="/saas-admin">
-            Admin global
-          </Link>
+          <span className="admin-chip">{roleLabels[tenant.role] ?? tenant.role}</span>
         </div>
         {children}
       </main>

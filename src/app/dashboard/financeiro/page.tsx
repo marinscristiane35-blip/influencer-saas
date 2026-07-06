@@ -2,7 +2,7 @@ import { ManualWalletTransactionForm } from "@/components/manual-wallet-transact
 import { OrdersImportForm } from "@/components/orders-import-form";
 import { listInfluencersByCompany } from "@/lib/influencers/repository";
 import { getDashboardFinancialSummary } from "@/lib/orders/service";
-import { getTenant } from "@/lib/tenant/context";
+import { requireCompanyPermission } from "@/lib/tenant/context";
 import { listCompanyWallets } from "@/lib/wallet/service";
 
 function money(value: string | number) {
@@ -13,11 +13,7 @@ function money(value: string | number) {
 }
 
 export default async function DashboardFinancePage() {
-  const tenant = await getTenant();
-
-  if (!tenant) {
-    return null;
-  }
+  const tenant = await requireCompanyPermission("finance:view_sensitive");
 
   const [influencers, walletSummaries, importSummary] = await Promise.all([
     listInfluencersByCompany(tenant.companyId),

@@ -130,6 +130,7 @@ model Company {
   influencerCoupons InfluencerCoupon[]
   commissionEvents CommissionEvent[]
   importedOrders ImportedOrder[]
+  influencerTimelineEvents InfluencerTimelineEvent[]
 
   @@map("companies")
 }
@@ -144,6 +145,7 @@ model User {
 
   memberships CompanyMember[]
   auditLogs   AuditLog[]
+  influencerTimelineEvents InfluencerTimelineEvent[]
 
   @@map("users")
 }
@@ -158,6 +160,7 @@ model Influencer {
   status     InfluencerStatus @default(invited)
   couponCode String?          @map("coupon_code")
   notes      String?
+  archivedAt DateTime?        @map("archived_at")
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
 
@@ -166,6 +169,7 @@ model Influencer {
   walletTransactions WalletTransaction[]
   coupons InfluencerCoupon[]
   commissionEvents CommissionEvent[]
+  timelineEvents InfluencerTimelineEvent[]
 
   @@unique([companyId, email])
   @@unique([companyId, instagram])
@@ -173,6 +177,26 @@ model Influencer {
   @@index([companyId, status])
   @@index([companyId, createdAt])
   @@map("influencers")
+}
+
+model InfluencerTimelineEvent {
+  id           String   @id @default(cuid())
+  companyId    String   @map("company_id")
+  influencerId String   @map("influencer_id")
+  userId       String?  @map("user_id")
+  type         String
+  title        String
+  description  String?
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, influencerId, createdAt])
+  @@index([companyId, type])
+  @@map("influencer_timeline_events")
 }
 
 model Campaign {
@@ -344,11 +368,29 @@ model CompanyMember {
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionOverrides CompanyMemberPermission[]
 
   @@unique([companyId, userId])
   @@index([companyId, role])
   @@index([userId])
   @@map("company_members")
+}
+
+model CompanyMemberPermission {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  memberId  String   @map("member_id")
+  permission String
+  allowed   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  member CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, permission])
+  @@index([companyId, permission])
+  @@index([memberId])
+  @@map("company_member_permissions")
 }
 
 model AuditLog {

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { importSpreadsheetOrders } from "@/lib/orders/service";
-import { requireTenant } from "@/lib/tenant/context";
+import { requireCompanyPermission } from "@/lib/tenant/context";
 import { createManualWalletTransaction } from "@/lib/wallet/service";
 
 const manualTransactionSchema = z.object({
@@ -19,7 +19,7 @@ export async function createManualWalletTransactionAction(
   _: unknown,
   formData: FormData,
 ) {
-  const tenant = await requireTenant();
+  const tenant = await requireCompanyPermission("finance:manual_transactions");
   const parsed = manualTransactionSchema.safeParse({
     amount: formData.get("amount"),
     description: formData.get("description"),
@@ -58,7 +58,7 @@ export async function createManualWalletTransactionAction(
 }
 
 export async function importOrdersCsvAction(_: unknown, formData: FormData) {
-  const tenant = await requireTenant();
+  const tenant = await requireCompanyPermission("finance:import_orders");
   const file = formData.get("ordersFile");
 
   if (!(file instanceof File) || file.size === 0) {

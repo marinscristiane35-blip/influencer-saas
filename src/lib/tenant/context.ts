@@ -1,4 +1,10 @@
 import { redirect } from "next/navigation";
+import {
+  canCompany,
+  resolveCompanyPermissions,
+  type CompanyPermission,
+  type PermissionOverride,
+} from "@/lib/auth/permissions";
 import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 
@@ -25,9 +31,31 @@ async function findTenant() {
     return null;
   }
 
+  const permissionOverrideRows = await prisma.$queryRaw<PermissionOverride[]>`
+    SELECT permission, allowed
+    FROM company_member_permissions
+    WHERE company_id = ${membership.companyId}
+      AND member_id = ${membership.id}
+  `;
+  const permissionOverrides = permissionOverrideRows.map(
+    (override: PermissionOverride) =>
+      ({
+        allowed: override.allowed,
+        permission: override.permission,
+      }) satisfies PermissionOverride,
+  );
+  const permissions = resolveCompanyPermissions({
+    overrides: permissionOverrides,
+    role: membership.role,
+  });
+
   return {
+    can: (permission: CompanyPermission) => canCompany(permissions, permission),
     companyId: membership.companyId,
     userId: membership.userId,
+    memberId: membership.id,
+    permissions,
+    permissionOverrides,
     role: membership.role,
     company: membership.company,
     user: membership.user,
@@ -49,6 +77,28 @@ export async function requireTenant() {
 
   if (!tenant) {
     redirect("/empresa/login");
+  }
+
+  return tenant;
+}
+
+export async function requireCompanyPermission(permission: CompanyPermission) {
+  const tenant = await requireTenant();
+
+  if (!tenant.can(permission)) {
+    redirect("/dashboard");
+  }
+
+  return tenant;
+}
+
+export async function requireAnyCompanyPermission(
+  permissions: CompanyPermission[],
+) {
+  const tenant = await requireTenant();
+
+  if (!permissions.some((permission) => tenant.can(permission))) {
+    redirect("/dashboard");
   }
 
   return tenant;

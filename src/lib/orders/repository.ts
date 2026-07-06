@@ -37,7 +37,15 @@ export type InfluencerCommissionOrderRow = {
   ordered_at: Date;
   commission_id: string;
   commission_amount: string;
+  commission_rate: string | null;
   commission_status: string;
+};
+
+export type CommissionDetailRow = InfluencerCommissionOrderRow & {
+  commission_base_amount: string;
+  commission_source_type: string;
+  commission_created_at: Date;
+  commission_available_at: Date | null;
 };
 
 export async function createImportedOrder(input: {
@@ -141,6 +149,7 @@ export async function listRecentInfluencerCommissionOrders(input: {
       imported_orders.ordered_at,
       commission_events.id AS commission_id,
       commission_events.amount::text AS commission_amount,
+      commission_events.commission_rate::text AS commission_rate,
       commission_events.status::text AS commission_status
     FROM commission_events
     INNER JOIN imported_orders
@@ -153,6 +162,50 @@ export async function listRecentInfluencerCommissionOrders(input: {
     ORDER BY imported_orders.ordered_at DESC, commission_events.created_at DESC
     LIMIT ${limit}
   `;
+}
+
+export async function listRecentInfluencerCommissions(input: {
+  companyId: string;
+  influencerId: string;
+  limit?: number;
+}) {
+  return listRecentInfluencerCommissionOrders(input);
+}
+
+export async function findInfluencerCommissionDetail(input: {
+  companyId: string;
+  influencerId: string;
+  commissionId: string;
+}) {
+  const rows = await prisma.$queryRaw<CommissionDetailRow[]>`
+    SELECT
+      imported_orders.id AS order_id,
+      imported_orders.external_id,
+      imported_orders.customer_email,
+      imported_orders.coupon_code,
+      imported_orders.gross_amount::text,
+      imported_orders.ordered_at,
+      commission_events.id AS commission_id,
+      commission_events.amount::text AS commission_amount,
+      commission_events.commission_rate::text AS commission_rate,
+      commission_events.status::text AS commission_status,
+      commission_events.base_amount::text AS commission_base_amount,
+      commission_events.source_type::text AS commission_source_type,
+      commission_events.created_at AS commission_created_at,
+      commission_events.available_at AS commission_available_at
+    FROM commission_events
+    INNER JOIN imported_orders
+      ON imported_orders.company_id = commission_events.company_id
+      AND imported_orders.external_id = commission_events.source_id
+      AND imported_orders.source = 'spreadsheet'
+    WHERE commission_events.company_id = ${input.companyId}
+      AND commission_events.influencer_id = ${input.influencerId}
+      AND commission_events.id = ${input.commissionId}
+      AND commission_events.source_type = 'spreadsheet'
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
 }
 
 export async function sumCurrentMonthInfluencerCommissions(input: {

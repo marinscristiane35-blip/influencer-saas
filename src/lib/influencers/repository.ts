@@ -13,8 +13,20 @@ export type InfluencerRow = {
   status: InfluencerStatus;
   coupon_code: string | null;
   notes: string | null;
+  archived_at: Date | null;
   created_at: Date;
   updated_at: Date;
+};
+
+export type InfluencerOperationalSummaryRow = InfluencerRow & {
+  available_balance: string | null;
+  pending_balance: string | null;
+  total_received: string | null;
+  current_month_commission: string | null;
+  total_commission: string | null;
+  imported_orders_count: bigint;
+  last_movement_at: Date | null;
+  last_movement_title: string | null;
 };
 
 export type InfluencerPortalRow = InfluencerRow & {
@@ -34,6 +46,7 @@ export async function listInfluencersByCompany(companyId: string) {
       status,
       coupon_code,
       notes,
+      archived_at,
       created_at,
       updated_at
     FROM influencers
@@ -96,6 +109,7 @@ export async function createInfluencer(input: {
       status,
       coupon_code,
       notes,
+      archived_at,
       updated_at
     )
     VALUES (
@@ -108,6 +122,7 @@ export async function createInfluencer(input: {
       ${input.status}::"InfluencerStatus",
       ${input.couponCode},
       ${input.notes},
+      null,
       now()
     )
   `;
@@ -127,6 +142,7 @@ export async function findInfluencerForLogin(email: string) {
       influencers.status,
       influencers.coupon_code,
       influencers.notes,
+      influencers.archived_at,
       influencers.created_at,
       influencers.updated_at,
       companies.name AS company_name,
@@ -135,6 +151,7 @@ export async function findInfluencerForLogin(email: string) {
     INNER JOIN companies ON companies.id = influencers.company_id
     WHERE influencers.email = ${email}
       AND influencers.status IN ('active', 'invited')
+      AND influencers.archived_at IS NULL
     ORDER BY influencers.created_at ASC
     LIMIT 1
   `;
@@ -157,6 +174,7 @@ export async function findInfluencerPortalContext(input: {
       influencers.status,
       influencers.coupon_code,
       influencers.notes,
+      influencers.archived_at,
       influencers.created_at,
       influencers.updated_at,
       companies.name AS company_name,
@@ -166,8 +184,283 @@ export async function findInfluencerPortalContext(input: {
     WHERE influencers.id = ${input.influencerId}
       AND influencers.company_id = ${input.companyId}
       AND influencers.status IN ('active', 'invited')
+      AND influencers.archived_at IS NULL
     LIMIT 1
   `;
 
   return rows[0] ?? null;
+}
+
+export async function findInfluencerByCompany(input: {
+  companyId: string;
+  influencerId: string;
+}) {
+  const rows = await prisma.$queryRaw<InfluencerRow[]>`
+    SELECT
+      id,
+      company_id,
+      name,
+      email,
+      phone,
+      instagram,
+      status,
+      coupon_code,
+      notes,
+      archived_at,
+      created_at,
+      updated_at
+    FROM influencers
+    WHERE company_id = ${input.companyId}
+      AND id = ${input.influencerId}
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function findInfluencerDuplicateForUpdate(input: {
+  companyId: string;
+  influencerId: string;
+  email: string;
+  instagram: string | null;
+  couponCode: string | null;
+}) {
+  const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+    SELECT id
+    FROM influencers
+    WHERE company_id = ${input.companyId}
+      AND id <> ${input.influencerId}
+      AND (
+        email = ${input.email}
+        OR (${input.instagram}::text IS NOT NULL AND instagram = ${input.instagram})
+        OR (${input.couponCode}::text IS NOT NULL AND coupon_code = ${input.couponCode})
+      )
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function updateInfluencer(input: {
+  companyId: string;
+  influencerId: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  instagram: string | null;
+  status: InfluencerStatus;
+  couponCode: string | null;
+  notes: string | null;
+}) {
+  const rows = await prisma.$queryRaw<InfluencerRow[]>`
+    UPDATE influencers
+    SET
+      name = ${input.name},
+      email = ${input.email},
+      phone = ${input.phone},
+      instagram = ${input.instagram},
+      status = ${input.status}::"InfluencerStatus",
+      coupon_code = ${input.couponCode},
+      notes = ${input.notes},
+      updated_at = now()
+    WHERE company_id = ${input.companyId}
+      AND id = ${input.influencerId}
+    RETURNING
+      id,
+      company_id,
+      name,
+      email,
+      phone,
+      instagram,
+      status,
+      coupon_code,
+      notes,
+      archived_at,
+      created_at,
+      updated_at
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function updateInfluencerStatus(input: {
+  companyId: string;
+  influencerId: string;
+  status: InfluencerStatus;
+}) {
+  const rows = await prisma.$queryRaw<InfluencerRow[]>`
+    UPDATE influencers
+    SET
+      status = ${input.status}::"InfluencerStatus",
+      updated_at = now()
+    WHERE company_id = ${input.companyId}
+      AND id = ${input.influencerId}
+    RETURNING
+      id,
+      company_id,
+      name,
+      email,
+      phone,
+      instagram,
+      status,
+      coupon_code,
+      notes,
+      archived_at,
+      created_at,
+      updated_at
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function archiveInfluencer(input: {
+  companyId: string;
+  influencerId: string;
+}) {
+  const rows = await prisma.$queryRaw<InfluencerRow[]>`
+    UPDATE influencers
+    SET archived_at = COALESCE(archived_at, now()),
+        updated_at = now()
+    WHERE company_id = ${input.companyId}
+      AND id = ${input.influencerId}
+    RETURNING
+      id,
+      company_id,
+      name,
+      email,
+      phone,
+      instagram,
+      status,
+      coupon_code,
+      notes,
+      archived_at,
+      created_at,
+      updated_at
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function unarchiveInfluencer(input: {
+  companyId: string;
+  influencerId: string;
+}) {
+  const rows = await prisma.$queryRaw<InfluencerRow[]>`
+    UPDATE influencers
+    SET archived_at = NULL,
+        updated_at = now()
+    WHERE company_id = ${input.companyId}
+      AND id = ${input.influencerId}
+    RETURNING
+      id,
+      company_id,
+      name,
+      email,
+      phone,
+      instagram,
+      status,
+      coupon_code,
+      notes,
+      archived_at,
+      created_at,
+      updated_at
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function listInfluencerOperationalSummaries(input: {
+  companyId: string;
+  includeArchived?: boolean;
+  search?: string | null;
+  status?: InfluencerStatus | null;
+}) {
+  const search = input.search?.trim().toLowerCase();
+  const searchPattern = search ? `%${search}%` : null;
+
+  return prisma.$queryRaw<InfluencerOperationalSummaryRow[]>`
+    SELECT
+      influencers.id,
+      influencers.company_id,
+      influencers.name,
+      influencers.email,
+      influencers.phone,
+      influencers.instagram,
+      influencers.status,
+      influencers.coupon_code,
+      influencers.notes,
+      influencers.archived_at,
+      influencers.created_at,
+      influencers.updated_at,
+      wallet_accounts.available_balance::text,
+      wallet_accounts.pending_balance::text,
+      wallet_accounts.total_received::text,
+      commission_summary.current_month_commission,
+      commission_summary.total_commission,
+      order_summary.imported_orders_count,
+      last_movement.last_movement_at,
+      last_movement.last_movement_title
+    FROM influencers
+    LEFT JOIN wallet_accounts
+      ON wallet_accounts.company_id = influencers.company_id
+      AND wallet_accounts.influencer_id = influencers.id
+    LEFT JOIN LATERAL (
+      SELECT
+        COALESCE(SUM(amount) FILTER (
+          WHERE competence_month = EXTRACT(MONTH FROM now())::int
+            AND competence_year = EXTRACT(YEAR FROM now())::int
+            AND status IN ('approved', 'blocked', 'available')
+        ), 0)::text AS current_month_commission,
+        COALESCE(SUM(amount) FILTER (
+          WHERE status IN ('approved', 'blocked', 'available')
+        ), 0)::text AS total_commission
+      FROM commission_events
+      WHERE company_id = influencers.company_id
+        AND influencer_id = influencers.id
+    ) commission_summary ON true
+    LEFT JOIN LATERAL (
+      SELECT COUNT(DISTINCT imported_orders.id)::bigint AS imported_orders_count
+      FROM commission_events
+      INNER JOIN imported_orders
+        ON imported_orders.company_id = commission_events.company_id
+        AND imported_orders.external_id = commission_events.source_id
+        AND imported_orders.source = 'spreadsheet'
+      WHERE commission_events.company_id = influencers.company_id
+        AND commission_events.influencer_id = influencers.id
+        AND commission_events.source_type = 'spreadsheet'
+    ) order_summary ON true
+    LEFT JOIN LATERAL (
+      SELECT movement_at AS last_movement_at,
+             movement_title AS last_movement_title
+      FROM (
+        SELECT
+          created_at AS movement_at,
+          title AS movement_title
+        FROM influencer_timeline_events
+        WHERE company_id = influencers.company_id
+          AND influencer_id = influencers.id
+        UNION ALL
+        SELECT
+          occurred_at AS movement_at,
+          CONCAT('Extrato: ', type::text) AS movement_title
+        FROM wallet_transactions
+        WHERE company_id = influencers.company_id
+          AND influencer_id = influencers.id
+      ) movements
+      ORDER BY movement_at DESC
+      LIMIT 1
+    ) last_movement ON true
+    WHERE influencers.company_id = ${input.companyId}
+      AND (${input.includeArchived ?? false}::boolean OR influencers.archived_at IS NULL)
+      AND (${input.status ?? null}::"InfluencerStatus" IS NULL OR influencers.status = ${input.status ?? null}::"InfluencerStatus")
+      AND (
+        ${searchPattern}::text IS NULL
+        OR lower(influencers.name) LIKE ${searchPattern}
+        OR lower(influencers.email) LIKE ${searchPattern}
+        OR lower(COALESCE(influencers.coupon_code, '')) LIKE ${searchPattern}
+      )
+    ORDER BY
+      influencers.archived_at ASC NULLS FIRST,
+      COALESCE(last_movement.last_movement_at, influencers.updated_at, influencers.created_at) DESC
+  `;
 }

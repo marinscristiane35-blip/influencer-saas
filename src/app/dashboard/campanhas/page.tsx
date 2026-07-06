@@ -1,4 +1,4 @@
-import { getTenant } from "@/lib/tenant/context";
+import { requireCompanyPermission } from "@/lib/tenant/context";
 import { listCampaignsByCompany } from "@/lib/campaigns/repository";
 import { CampaignForm } from "@/components/campaign-form";
 
@@ -34,11 +34,7 @@ function formatBudget(value: string | null) {
 }
 
 export default async function CampaignsPage() {
-  const tenant = await getTenant();
-
-  if (!tenant) {
-    return null;
-  }
+  const tenant = await requireCompanyPermission("campaigns:view");
 
   const campaigns = await listCampaignsByCompany(tenant.companyId);
 

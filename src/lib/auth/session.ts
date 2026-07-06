@@ -11,6 +11,12 @@ export type SessionPayload = {
 };
 
 const cookieNames = {
+  company_user: "company_session",
+  influencer: "influencer_session",
+  saas_admin: "saas_admin_session",
+} satisfies Record<SessionPayload["sessionType"], string>;
+
+const legacyCookieNames = {
   company_user: "influencer_saas_company_session",
   influencer: "influencer_saas_influencer_session",
   saas_admin: "influencer_saas_admin_session",
@@ -81,6 +87,7 @@ export async function createSession(input: Omit<SessionPayload, "expiresAt">) {
     path: "/",
     expires: new Date(expiresAt),
   });
+  cookieStore.delete(legacyCookieNames[input.sessionType]);
 }
 
 export async function getSession(sessionType?: SessionPayload["sessionType"]) {
@@ -88,10 +95,21 @@ export async function getSession(sessionType?: SessionPayload["sessionType"]) {
 
   if (sessionType) {
     const session = decodeSession(cookieStore.get(cookieNames[sessionType])?.value);
-    return session?.sessionType === sessionType ? session : null;
+    const legacySession = decodeSession(
+      cookieStore.get(legacyCookieNames[sessionType])?.value,
+    );
+
+    return session?.sessionType === sessionType
+      ? session
+      : legacySession?.sessionType === sessionType
+        ? legacySession
+        : null;
   }
 
-  for (const cookieName of Object.values(cookieNames)) {
+  for (const cookieName of [
+    ...Object.values(cookieNames),
+    ...Object.values(legacyCookieNames),
+  ]) {
     const session = decodeSession(cookieStore.get(cookieName)?.value);
 
     if (session) {
@@ -107,10 +125,14 @@ export async function destroySession(sessionType?: SessionPayload["sessionType"]
 
   if (sessionType) {
     cookieStore.delete(cookieNames[sessionType]);
+    cookieStore.delete(legacyCookieNames[sessionType]);
     return;
   }
 
-  for (const cookieName of Object.values(cookieNames)) {
+  for (const cookieName of [
+    ...Object.values(cookieNames),
+    ...Object.values(legacyCookieNames),
+  ]) {
     cookieStore.delete(cookieName);
   }
 }

@@ -58,4 +58,8 @@ export async function requireInfluencer() {
   };
 }
 
-export { requireTenant as requireCompanyUser } from "@/lib/tenant/context";
+export {
+  requireAnyCompanyPermission,
+  requireCompanyPermission,
+  requireTenant as requireCompanyUser,
+} from "@/lib/tenant/context";

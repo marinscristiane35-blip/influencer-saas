@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createCampaign } from "@/lib/campaigns/repository";
-import { requireTenant } from "@/lib/tenant/context";
+import { requireCompanyPermission } from "@/lib/tenant/context";
 
 const campaignSchema = z
   .object({
@@ -49,7 +49,7 @@ function budgetOrNull(value?: string) {
 }
 
 export async function createCampaignAction(_: unknown, formData: FormData) {
-  const tenant = await requireTenant();
+  const tenant = await requireCompanyPermission("campaigns:create");
   const parsed = campaignSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),

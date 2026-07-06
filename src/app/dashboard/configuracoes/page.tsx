@@ -1,11 +1,7 @@
-import { getTenant } from "@/lib/tenant/context";
+import { requireCompanyPermission } from "@/lib/tenant/context";
 
 export default async function DashboardSettingsPage() {
-  const tenant = await getTenant();
-
-  if (!tenant) {
-    return null;
-  }
+  const tenant = await requireCompanyPermission("company:settings");
 
   return (
     <section className="form-panel">
