@@ -1,17 +1,18 @@
 :root {
   color-scheme: light;
-  --background: #f5f6f3;
-  --foreground: #1f2523;
-  --muted: #6b716f;
-  --line: #d9ded5;
+  --background: #f7f3ee;
+  --foreground: #1f160f;
+  --muted: #766d63;
+  --line: #eadfd2;
   --panel: #ffffff;
-  --primary: #225c55;
-  --primary-strong: #173f3a;
-  --accent: #c66a3d;
+  --primary: #1f160f;
+  --primary-strong: #11100e;
+  --accent: #f97316;
   --danger: #9f2f2f;
   --success: #2e6f55;
   --warning: #8a6426;
-  --soft: #eef1eb;
+  --soft: #fff7ed;
+  --shadow: 0 16px 36px rgba(67, 45, 25, 0.08);
 }
 
 * {
@@ -25,7 +26,9 @@ body {
 
 body {
   margin: 0;
-  background: var(--background);
+  background:
+    radial-gradient(circle at top left, rgba(249, 115, 22, 0.08), transparent 32%),
+    var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -45,7 +48,7 @@ textarea {
 .shell {
   display: grid;
   min-height: 100vh;
-  grid-template-columns: 268px minmax(0, 1fr);
+  grid-template-columns: 286px minmax(0, 1fr);
 }
 
 .sidebar {
@@ -55,11 +58,11 @@ textarea {
 }
 
 .dashboard-sidebar {
-  background: #ffffff;
+  background: #fffaf4;
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding: 22px;
+  padding: 24px;
 }
 
 .portal-sidebar {
@@ -74,15 +77,16 @@ textarea {
 
 .brand-mark {
   align-items: center;
-  background: var(--primary);
-  border-radius: 8px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border-radius: 16px;
   color: #ffffff;
   display: inline-flex;
   font-size: 13px;
   font-weight: 800;
-  height: 38px;
+  box-shadow: 0 12px 26px rgba(249, 115, 22, 0.24);
+  height: 44px;
   justify-content: center;
-  width: 38px;
+  width: 44px;
 }
 
 .dashboard-brand-name {
@@ -91,10 +95,11 @@ textarea {
 }
 
 .tenant-card {
-  background: #f8faf6;
+  background: #ffffff;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 16px;
 }
 
 .tenant-card strong,
@@ -117,25 +122,27 @@ textarea {
 
 .dashboard-nav-links {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .dashboard-nav-link,
 .dashboard-logout {
   border: 0;
-  border-radius: 8px;
+  border-radius: 16px;
   color: var(--muted);
   cursor: pointer;
   display: block;
-  padding: 10px 12px;
+  font-weight: 700;
+  padding: 12px 14px;
   text-align: left;
   width: 100%;
 }
 
 .dashboard-nav-link:hover,
 .dashboard-nav-link[aria-current="page"] {
-  background: var(--soft);
+  background: #1f160f;
   color: var(--foreground);
+  color: #ffffff;
   font-weight: 700;
 }
 
@@ -183,7 +190,7 @@ textarea {
 }
 
 .dashboard-content {
-  padding: 34px;
+  padding: 34px 38px;
 }
 
 .topbar {
@@ -195,9 +202,10 @@ textarea {
 }
 
 .dashboard-topbar {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 250, 244, 0.82);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 22px;
+  box-shadow: 0 10px 28px rgba(67, 45, 25, 0.05);
   padding: 16px 18px;
 }
 
@@ -208,13 +216,13 @@ textarea {
 }
 
 h1 {
-  font-size: 30px;
+  font-size: 34px;
   line-height: 1.2;
   margin: 0;
 }
 
 h2 {
-  font-size: 22px;
+  font-size: 26px;
   line-height: 1.25;
   margin: 0;
 }
@@ -229,20 +237,21 @@ h2 {
 .form-panel {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 22px;
+  padding: 22px;
 }
 
 .elevated-panel,
 .metric-card,
 .next-steps {
-  box-shadow: 0 12px 30px rgba(31, 37, 35, 0.06);
+  box-shadow: var(--shadow);
 }
 
 .metric {
   color: var(--primary-strong);
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1.05;
   margin-top: 12px;
 }
 
@@ -261,9 +270,9 @@ h2 {
 
 .admin-chip,
 .panel-chip {
-  background: var(--soft);
+  background: #fff7ed;
   border-radius: 999px;
-  color: var(--primary-strong);
+  color: #9a3412;
   font-size: 13px;
   font-weight: 700;
   padding: 8px 11px;
@@ -271,12 +280,19 @@ h2 {
 }
 
 .page-heading {
+  background: #fffaf4;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
   margin-bottom: 20px;
   max-width: 760px;
+  padding: 22px;
 }
 
 .page-heading h2 {
-  font-size: 26px;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0;
   margin-bottom: 8px;
 }
 
@@ -286,15 +302,27 @@ h2 {
 
 .metric-grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .metric-card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 18px;
+  border-radius: 22px;
+  padding: 20px;
+}
+
+.metric-card-accent {
+  background: #f97316;
+  border-color: #f97316;
+  color: #ffffff;
+}
+
+.metric-card-accent p,
+.metric-card-accent span,
+.metric-card-accent .metric {
+  color: #ffffff;
 }
 
 .metric-card p,
@@ -313,11 +341,64 @@ h2 {
   align-items: start;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 24px;
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+  padding: 24px;
+}
+
+.product-hero {
+  align-items: stretch;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 430px);
+  padding: 28px;
+}
+
+.product-hero h2 {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.05;
+  margin: 8px 0 12px;
+}
+
+.product-hero p {
+  color: var(--muted);
+  margin: 0;
+  max-width: 680px;
+}
+
+.hero-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.hero-highlight-card {
+  background: #f97316;
+  border-radius: 24px;
+  color: #ffffff;
+  display: grid;
+  gap: 10px;
   padding: 22px;
+}
+
+.hero-highlight-card span,
+.hero-highlight-card p {
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+
+.hero-highlight-card strong {
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1.05;
 }
 
 .action-grid {
@@ -328,11 +409,11 @@ h2 {
 .action-card {
   background: #f8faf6;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 18px;
   color: inherit;
   display: grid;
   gap: 6px;
-  padding: 14px;
+  padding: 16px;
   text-decoration: none;
 }
 
@@ -354,7 +435,7 @@ h2 {
 .step-list span {
   background: #f8faf6;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 11px 12px;
 }
 
@@ -366,13 +447,13 @@ h2 {
 
 .profile-grid {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   grid-template-columns: minmax(320px, 1fr) minmax(260px, 360px);
 }
 
 .influencers-layout {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
 }
 
@@ -380,11 +461,12 @@ h2 {
   align-items: start;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 26px;
   display: flex;
   gap: 16px;
   justify-content: space-between;
-  padding: 20px;
+  box-shadow: var(--shadow);
+  padding: 24px;
 }
 
 .profile-actions,
@@ -406,7 +488,7 @@ h2 {
 .avatar-placeholder {
   align-items: center;
   background: var(--primary);
-  border-radius: 8px;
+  border-radius: 20px;
   color: #ffffff;
   display: inline-flex;
   flex: 0 0 auto;
@@ -433,7 +515,7 @@ h2 {
 .hero-metrics div {
   background: #f8faf6;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 18px;
   padding: 12px;
 }
 
@@ -458,7 +540,7 @@ h2 {
 }
 
 .secondary-button {
-  background: #52616a;
+  background: #3f352d;
 }
 
 .secondary-button:hover {
@@ -477,6 +559,38 @@ h2 {
   display: grid;
   gap: 10px 16px;
   grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+}
+
+.dashboard-summary-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-mini-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-mini-row {
+  align-items: center;
+  background: #fffaf4;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 12px;
+}
+
+.dashboard-mini-row div {
+  display: grid;
+  gap: 4px;
+}
+
+.dashboard-mini-row span:not(.ranking-position):not(.status-badge) {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .detail-grid span {
@@ -501,27 +615,28 @@ h2 {
 
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 720px;
 }
 
 .data-table th,
 .data-table td {
   border-bottom: 1px solid var(--line);
-  padding: 12px 8px;
+  padding: 14px 12px;
   text-align: left;
   vertical-align: top;
 }
 
 .data-table th {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .data-table tbody tr:hover {
-  background: #fafbf8;
+  background: #fffaf4;
 }
 
 .table-note {
@@ -536,7 +651,7 @@ h2 {
   display: inline-flex;
   font-size: 12px;
   font-weight: 700;
-  padding: 5px 9px;
+  padding: 7px 10px;
 }
 
 .status-active {
@@ -570,9 +685,9 @@ h2 {
 }
 
 .empty-state {
-  background: #f8faf6;
-  border: 1px dashed #cbd3c6;
-  border-radius: 8px;
+  background: #fffaf4;
+  border: 1px dashed #e7cbb4;
+  border-radius: 20px;
   padding: 24px;
 }
 
@@ -657,11 +772,12 @@ h2 {
 
 .button {
   border: 0;
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--primary);
   color: #ffffff;
   cursor: pointer;
-  padding: 11px 14px;
+  font-weight: 800;
+  padding: 12px 16px;
 }
 
 .primary-action {
@@ -728,12 +844,12 @@ h2 {
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
-  padding: 8px 11px;
+  padding: 9px 13px;
 }
 
 .filter-chip.active {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: #f97316;
+  border-color: #f97316;
   color: #ffffff;
 }
 
@@ -754,15 +870,15 @@ h2 {
 .influencer-row-card {
   background: #ffffff;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 22px;
   display: grid;
   gap: 14px;
-  padding: 16px;
+  padding: 18px;
 }
 
 .influencer-row-card:hover {
-  border-color: #bec8bd;
-  box-shadow: 0 12px 26px rgba(31, 37, 35, 0.06);
+  border-color: #f4b183;
+  box-shadow: var(--shadow);
 }
 
 .influencer-row-card.archived {
@@ -795,13 +911,32 @@ h2 {
 .influencer-row-metrics {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  grid-template-columns: repeat(6, minmax(110px, 1fr));
+}
+
+.ranking-identity {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.ranking-position {
+  align-items: center;
+  background: #f97316;
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  flex: 0 0 52px;
+  font-size: 18px;
+  font-weight: 800;
+  height: 52px;
+  justify-content: center;
 }
 
 .influencer-row-metrics div {
-  background: #f8faf6;
+  background: #fffaf4;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 16px;
   min-width: 0;
   padding: 10px;
 }
@@ -974,6 +1109,73 @@ h2 {
   grid-template-columns: repeat(6, minmax(120px, 1fr));
 }
 
+.challenge-card-list {
+  display: grid;
+  gap: 14px;
+}
+
+.challenge-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.challenge-card h3 {
+  font-size: 20px;
+  margin: 10px 0 6px;
+}
+
+.challenge-card p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.challenge-meta {
+  background: #fffaf4;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  min-width: 180px;
+  padding: 12px;
+}
+
+.challenge-meta span {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.challenge-prize {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 16px;
+  color: #9a3412;
+  font-weight: 700;
+  padding: 12px;
+}
+
+.review-actions {
+  display: grid;
+  gap: 8px;
+  min-width: 260px;
+}
+
+.review-actions form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-actions input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 70px;
+  padding: 9px 10px;
+}
+
 .timeline-list {
   display: grid;
   gap: 10px;
@@ -981,7 +1183,7 @@ h2 {
 
 .timeline-item {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 18px;
   display: flex;
   gap: 16px;
   justify-content: space-between;
@@ -1016,6 +1218,8 @@ h2 {
   .two-column,
   .profile-grid,
   .influencers-layout,
+  .dashboard-summary-grid,
+  .product-hero,
   .next-steps,
   .search-form,
   .field-grid {

@@ -18,6 +18,11 @@ const links = [
     permission: "campaigns:view",
   },
   {
+    href: "/dashboard/desafios",
+    label: "Desafios",
+    permission: "challenges:view",
+  },
+  {
     href: "/dashboard/cupons",
     label: "Cupons",
     permission: "influencers:view",

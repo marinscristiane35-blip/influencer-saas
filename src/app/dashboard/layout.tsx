@@ -37,11 +37,11 @@ export default async function DashboardLayout({
           <span className="brand-mark">IS</span>
           <div>
             <p className="brand dashboard-brand-name">Influencer SaaS</p>
-            <p className="eyebrow">Area operacional</p>
+            <p className="eyebrow">Operacao de embaixadores</p>
           </div>
         </div>
         <div className="tenant-card">
-          <p className="eyebrow">Empresa atual</p>
+          <p className="eyebrow">Programa atual</p>
           <strong>{tenant.company.name}</strong>
           <span>{roleLabels[tenant.role] ?? tenant.role}</span>
         </div>
@@ -50,7 +50,7 @@ export default async function DashboardLayout({
       <main className="content dashboard-content">
         <div className="topbar dashboard-topbar">
           <div>
-            <p className="eyebrow">Workspace</p>
+            <p className="eyebrow">Painel operacional</p>
             <h1>{tenant.company.name}</h1>
           </div>
           <span className="admin-chip">{roleLabels[tenant.role] ?? tenant.role}</span>

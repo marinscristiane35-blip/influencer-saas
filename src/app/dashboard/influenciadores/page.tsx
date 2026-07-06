@@ -86,10 +86,29 @@ export default async function InfluencersPage({
       total + Number(influencer.current_month_commission ?? 0),
     0,
   );
-  const availableBalance = influencers.reduce(
-    (total, influencer) => total + Number(influencer.available_balance ?? 0),
+  const currentMonthOrders = influencers.reduce(
+    (total, influencer) =>
+      total + Number(influencer.current_month_orders_count ?? 0),
     0,
   );
+  const currentMonthSold = influencers.reduce(
+    (total, influencer) =>
+      total + Number(influencer.current_month_sold_amount ?? 0),
+    0,
+  );
+  const rankedInfluencers = [...influencers].sort((left, right) => {
+    const leftRank = Number(left.ranking_position ?? 999999);
+    const rightRank = Number(right.ranking_position ?? 999999);
+
+    if (leftRank !== rightRank) {
+      return leftRank - rightRank;
+    }
+
+    return (
+      Number(right.current_month_sold_amount ?? 0) -
+      Number(left.current_month_sold_amount ?? 0)
+    );
+  });
 
   function filterHref(next: {
     archived?: boolean;
@@ -121,16 +140,16 @@ export default async function InfluencersPage({
     <>
       <section className="page-heading compact-heading">
         <p className="eyebrow">Influenciadores</p>
-        <h2>Operacao de influenciadores</h2>
+        <h2>Painel operacional de influenciadores</h2>
         <p className="muted">
-          Acompanhe criadores, cupons, status e sinais financeiros em uma
-          visao rapida antes de abrir o perfil operacional.
+          Acompanhe ranking mensal, cupons, vendas, comissoes e acesso ao
+          portal antes de abrir o perfil individual.
         </p>
       </section>
 
       <section className="metric-grid section-gap">
         <article className="metric-card">
-          <p>Resultado filtrado</p>
+          <p>Total exibido</p>
           <div className="metric">{influencers.length}</div>
           <span>Base exibida com os filtros atuais.</span>
         </article>
@@ -140,18 +159,23 @@ export default async function InfluencersPage({
           <span>Perfis prontos para operacao.</span>
         </article>
         <article className="metric-card">
+          <p>Pedidos do mes</p>
+          <div className="metric">{currentMonthOrders}</div>
+          <span>Pedidos pagos com cupons da base exibida.</span>
+        </article>
+        <article className="metric-card">
+          <p>Vendido no mes</p>
+          <div className="metric">
+            {canViewFinance ? money(currentMonthSold) : "Restrito"}
+          </div>
+          <span>Valor comissionavel importado no mes.</span>
+        </article>
+        <article className="metric-card">
           <p>Comissao do mes</p>
           <div className="metric">
             {canViewFinance ? money(currentMonthCommission) : "Restrito"}
           </div>
           <span>Comissoes geradas por cupom.</span>
-        </article>
-        <article className="metric-card">
-          <p>Saldo disponivel</p>
-          <div className="metric">
-            {canViewFinance ? money(availableBalance) : "Restrito"}
-          </div>
-          <span>Somatorio das carteiras exibidas.</span>
         </article>
         <article className="metric-card">
           <p>Arquivados</p>
@@ -241,7 +265,7 @@ export default async function InfluencersPage({
             </div>
           ) : (
             <div className="influencer-card-list">
-              {influencers.map((influencer) => (
+              {rankedInfluencers.map((influencer, index) => (
                 <article
                   className={
                     influencer.archived_at
@@ -251,7 +275,13 @@ export default async function InfluencersPage({
                   key={influencer.id}
                 >
                   <div className="influencer-row-main">
-                    <div>
+                    <div className="ranking-identity">
+                      <div className="ranking-position">
+                        {influencer.ranking_position
+                          ? `#${influencer.ranking_position.toString()}`
+                          : `#${index + 1}`}
+                      </div>
+                      <div>
                       <div className="row-title">
                         <strong>{influencer.name}</strong>
                         <span className={statusClasses[influencer.status]}>
@@ -270,6 +300,15 @@ export default async function InfluencersPage({
                           : "Instagram nao informado"}
                         {influencer.phone ? ` - ${influencer.phone}` : ""}
                       </span>
+                      <span className="table-note">
+                        Portal:{" "}
+                        {influencer.portal_account_status === "active"
+                          ? "ativo"
+                          : influencer.portal_account_status === "inactive"
+                            ? "inativo"
+                            : "sem acesso"}
+                      </span>
+                      </div>
                     </div>
                     <Link
                       className="button secondary-button row-profile-link"
@@ -282,7 +321,26 @@ export default async function InfluencersPage({
                   <div className="influencer-row-metrics">
                     <div>
                       <span>Cupom</span>
-                      <strong>{influencer.coupon_code ?? "-"}</strong>
+                      <strong>
+                        {influencer.coupon_code ?? "Sem cupom"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Pedidos do mes</span>
+                      <strong>{influencer.current_month_orders_count.toString()}</strong>
+                      <small>
+                        {Number(influencer.current_month_orders_count) === 0
+                          ? "Sem vendas no mes"
+                          : "Pedidos pagos"}
+                      </small>
+                    </div>
+                    <div>
+                      <span>Vendido no mes</span>
+                      <strong>
+                        {canViewFinance
+                          ? money(influencer.current_month_sold_amount)
+                          : "Restrito"}
+                      </strong>
                     </div>
                     <div>
                       <span>Comissao do mes</span>
@@ -300,14 +358,8 @@ export default async function InfluencersPage({
                           : "Restrito"}
                       </strong>
                       {canViewFinance ? (
-                        <small>
-                          Pendente {money(influencer.pending_balance)}
-                        </small>
+                        <small>Pendente {money(influencer.pending_balance)}</small>
                       ) : null}
-                    </div>
-                    <div>
-                      <span>Pedidos</span>
-                      <strong>{influencer.imported_orders_count.toString()}</strong>
                     </div>
                     <div>
                       <span>Ultimo movimento</span>

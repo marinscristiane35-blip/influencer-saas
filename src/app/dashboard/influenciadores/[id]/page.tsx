@@ -1,4 +1,6 @@
 import { InfluencerCommissionsTable } from "@/components/influencers/influencer-commissions-table";
+import { InfluencerChallengesPanel } from "@/components/influencers/influencer-challenges-panel";
+import { InfluencerCouponsPanel } from "@/components/influencers/influencer-coupons-panel";
 import { InfluencerFinancialCards } from "@/components/influencers/influencer-financial-cards";
 import { InfluencerFutureBlocks } from "@/components/influencers/influencer-future-blocks";
 import { InfluencerLinkedCampaigns } from "@/components/influencers/influencer-linked-campaigns";
@@ -33,10 +35,15 @@ export default async function InfluencerProfilePage({
   const {
     attributedOrdersCount,
     averageTicket,
+    coupons,
+    currentMonth,
     currentMonthCommission,
+    challengeParticipation,
     influencer,
     linkedCampaigns,
     permissions,
+    portalAccount,
+    ranking,
     recentCommissions,
     recentOrders,
     statement,
@@ -50,7 +57,11 @@ export default async function InfluencerProfilePage({
         canChangeStatus={permissions.canChangeStatus}
         canUpdate={permissions.canUpdate}
         currentMonthCommission={currentMonthCommission}
+        currentMonthOrders={Number(currentMonth.orders_count)}
+        currentMonthSold={currentMonth.gross_amount}
         influencer={influencer}
+        portalStatus={portalAccount?.status ?? null}
+        rankingPosition={ranking ? Number(ranking.position) : null}
         saldoDisponivel={statement?.wallet.available_balance ?? null}
       />
 
@@ -64,6 +75,12 @@ export default async function InfluencerProfilePage({
 
       <div className="profile-grid section-gap">
         <div>
+          <InfluencerCouponsPanel coupons={coupons} />
+          <InfluencerChallengesPanel challenges={challengeParticipation} />
+          <InfluencerLinkedCampaigns
+            campaigns={linkedCampaigns}
+            canViewCampaigns={permissions.canViewCampaigns}
+          />
           {permissions.canViewFinance ? (
             <>
               <InfluencerOrdersTable
@@ -83,11 +100,6 @@ export default async function InfluencerProfilePage({
           influencer={influencer}
         />
       </div>
-
-      <InfluencerLinkedCampaigns
-        campaigns={linkedCampaigns}
-        canViewCampaigns={permissions.canViewCampaigns}
-      />
 
       <InfluencerFutureBlocks />
     </>

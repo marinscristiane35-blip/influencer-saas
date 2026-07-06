@@ -5,6 +5,7 @@ import { requireInfluencer } from "@/lib/auth/guards";
 const links = [
   { href: "/portal", label: "Resumo" },
   { href: "/portal/campanhas", label: "Campanhas" },
+  { href: "/portal/desafios", label: "Desafios" },
   { href: "/portal/resultados", label: "Resultados" },
   { href: "/portal/carteira", label: "Carteira" },
   { href: "/portal/perfil", label: "Perfil" },

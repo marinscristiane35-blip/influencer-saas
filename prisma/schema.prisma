@@ -123,6 +123,19 @@ enum CampaignInfluencerStatus {
   finished
 }
 
+enum InfluencerChallengeStatus {
+  draft
+  active
+  finished
+  cancelled
+}
+
+enum InfluencerChallengeSubmissionStatus {
+  pending
+  approved
+  rejected
+}
+
 model Company {
   id        String        @id @default(cuid())
   name      String
@@ -145,6 +158,9 @@ model Company {
   influencerTimelineEvents InfluencerTimelineEvent[]
   influencerPortalAccounts InfluencerPortalAccount[]
   campaignInfluencers CampaignInfluencer[]
+  influencerChallenges InfluencerChallenge[]
+  influencerChallengeSubmissions InfluencerChallengeSubmission[]
+  influencerChallengeScores InfluencerChallengeScore[]
 
   @@map("companies")
 }
@@ -186,6 +202,8 @@ model Influencer {
   timelineEvents InfluencerTimelineEvent[]
   portalAccount InfluencerPortalAccount?
   campaignLinks CampaignInfluencer[]
+  challengeSubmissions InfluencerChallengeSubmission[]
+  challengeScores InfluencerChallengeScore[]
 
   @@unique([companyId, email])
   @@unique([companyId, instagram])
@@ -276,6 +294,76 @@ model CampaignInfluencer {
   @@index([companyId, influencerId])
   @@index([companyId, status])
   @@map("campaign_influencers")
+}
+
+model InfluencerChallenge {
+  id               String                    @id @default(cuid())
+  companyId        String                    @map("company_id")
+  title            String
+  description      String
+  prizeDescription String?                   @map("prize_description")
+  status           InfluencerChallengeStatus @default(draft)
+  startsAt         DateTime?                 @map("starts_at")
+  endsAt           DateTime?                 @map("ends_at")
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime                  @updatedAt @map("updated_at")
+
+  company     Company                         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  submissions InfluencerChallengeSubmission[]
+  scores      InfluencerChallengeScore[]
+
+  @@index([companyId, status])
+  @@index([companyId, startsAt])
+  @@index([companyId, createdAt])
+  @@map("influencer_challenges")
+}
+
+model InfluencerChallengeSubmission {
+  id           String                              @id @default(cuid())
+  companyId    String                              @map("company_id")
+  challengeId  String                              @map("challenge_id")
+  influencerId String                              @map("influencer_id")
+  description  String
+  linkUrl      String?                             @map("link_url")
+  fileUrl      String?                             @map("file_url")
+  status       InfluencerChallengeSubmissionStatus @default(pending)
+  reviewNote   String?                             @map("review_note")
+  reviewedAt   DateTime?                           @map("reviewed_at")
+  createdAt    DateTime                            @default(now()) @map("created_at")
+  updatedAt    DateTime                            @updatedAt @map("updated_at")
+
+  company    Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  challenge  InfluencerChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  influencer Influencer          @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  scores     InfluencerChallengeScore[]
+
+  @@index([companyId, challengeId])
+  @@index([companyId, influencerId])
+  @@index([companyId, status])
+  @@index([companyId, createdAt])
+  @@map("influencer_challenge_submissions")
+}
+
+model InfluencerChallengeScore {
+  id           String   @id @default(cuid())
+  companyId    String   @map("company_id")
+  challengeId  String   @map("challenge_id")
+  influencerId String   @map("influencer_id")
+  submissionId String?  @map("submission_id")
+  points       Int
+  note         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  company    Company                        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  challenge  InfluencerChallenge            @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  influencer Influencer                     @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+  submission InfluencerChallengeSubmission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, challengeId])
+  @@index([companyId, influencerId])
+  @@index([companyId, submissionId])
+  @@map("influencer_challenge_scores")
 }
 
 model WalletAccount {

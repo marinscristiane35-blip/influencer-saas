@@ -4,10 +4,6 @@ const blocks = [
     label: "Campanhas",
   },
   {
-    detail: "Pontuacao, regras e participacao serao exibidas neste bloco.",
-    label: "Desafios",
-  },
-  {
     detail: "Envios, aprovacoes e entregas aparecerao quando o modulo existir.",
     label: "Conteudos/entregas",
   },

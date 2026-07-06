@@ -121,6 +121,31 @@ export async function updateInfluencerPortalAccountLastLogin(input: {
   `;
 }
 
+export async function findInfluencerPortalAccountByInfluencer(input: {
+  companyId: string;
+  influencerId: string;
+}) {
+  const rows = await prisma.$queryRaw<
+    Omit<InfluencerPortalAccountRow, "password_hash">[]
+  >`
+    SELECT
+      id,
+      company_id,
+      influencer_id,
+      email,
+      status,
+      last_login_at,
+      created_at,
+      updated_at
+    FROM influencer_portal_accounts
+    WHERE company_id = ${input.companyId}
+      AND influencer_id = ${input.influencerId}
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
+}
+
 export async function upsertInfluencerPortalAccount(input: {
   companyId: string;
   influencerId: string;

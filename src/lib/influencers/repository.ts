@@ -23,10 +23,15 @@ export type InfluencerOperationalSummaryRow = InfluencerRow & {
   pending_balance: string | null;
   total_received: string | null;
   current_month_commission: string | null;
+  current_month_orders_count: bigint;
+  current_month_sold_amount: string | null;
   total_commission: string | null;
   imported_orders_count: bigint;
   last_movement_at: Date | null;
   last_movement_title: string | null;
+  portal_account_status: string | null;
+  portal_last_login_at: Date | null;
+  ranking_position: bigint | null;
 };
 
 export type InfluencerPortalRow = InfluencerRow & {
@@ -396,14 +401,22 @@ export async function listInfluencerOperationalSummaries(input: {
       wallet_accounts.pending_balance::text,
       wallet_accounts.total_received::text,
       commission_summary.current_month_commission,
+      COALESCE(month_order_summary.current_month_orders_count, 0)::bigint AS current_month_orders_count,
+      COALESCE(month_order_summary.current_month_sold_amount, '0') AS current_month_sold_amount,
       commission_summary.total_commission,
       order_summary.imported_orders_count,
       last_movement.last_movement_at,
-      last_movement.last_movement_title
+      last_movement.last_movement_title,
+      portal_account.status::text AS portal_account_status,
+      portal_account.last_login_at AS portal_last_login_at,
+      monthly_ranking.position AS ranking_position
     FROM influencers
     LEFT JOIN wallet_accounts
       ON wallet_accounts.company_id = influencers.company_id
       AND wallet_accounts.influencer_id = influencers.id
+    LEFT JOIN influencer_portal_accounts portal_account
+      ON portal_account.company_id = influencers.company_id
+      AND portal_account.influencer_id = influencers.id
     LEFT JOIN LATERAL (
       SELECT
         COALESCE(SUM(amount) FILTER (
@@ -418,6 +431,30 @@ export async function listInfluencerOperationalSummaries(input: {
       WHERE company_id = influencers.company_id
         AND influencer_id = influencers.id
     ) commission_summary ON true
+    LEFT JOIN LATERAL (
+      WITH influencer_codes AS (
+        SELECT UPPER(code) AS code
+        FROM influencer_coupons
+        WHERE company_id = influencers.company_id
+          AND influencer_id = influencers.id
+        UNION
+        SELECT UPPER(coupon_code) AS code
+        FROM influencers source_influencer
+        WHERE source_influencer.company_id = influencers.company_id
+          AND source_influencer.id = influencers.id
+          AND source_influencer.coupon_code IS NOT NULL
+      )
+      SELECT
+        COUNT(imported_orders.id)::bigint AS current_month_orders_count,
+        COALESCE(SUM(imported_orders.gross_amount), 0)::text AS current_month_sold_amount
+      FROM imported_orders
+      INNER JOIN influencer_codes
+        ON UPPER(imported_orders.coupon_code) = influencer_codes.code
+      WHERE imported_orders.company_id = influencers.company_id
+        AND imported_orders.status = 'paid'
+        AND EXTRACT(MONTH FROM imported_orders.ordered_at) = EXTRACT(MONTH FROM now())
+        AND EXTRACT(YEAR FROM imported_orders.ordered_at) = EXTRACT(YEAR FROM now())
+    ) month_order_summary ON true
     LEFT JOIN LATERAL (
       SELECT COUNT(DISTINCT imported_orders.id)::bigint AS imported_orders_count
       FROM commission_events
@@ -450,6 +487,50 @@ export async function listInfluencerOperationalSummaries(input: {
       ORDER BY movement_at DESC
       LIMIT 1
     ) last_movement ON true
+    LEFT JOIN LATERAL (
+      WITH influencer_codes AS (
+        SELECT
+          ranked_influencers.id AS influencer_id,
+          UPPER(influencer_coupons.code) AS code
+        FROM influencers ranked_influencers
+        INNER JOIN influencer_coupons
+          ON influencer_coupons.company_id = ranked_influencers.company_id
+          AND influencer_coupons.influencer_id = ranked_influencers.id
+        WHERE ranked_influencers.company_id = influencers.company_id
+          AND ranked_influencers.archived_at IS NULL
+        UNION
+        SELECT
+          ranked_influencers.id AS influencer_id,
+          UPPER(ranked_influencers.coupon_code) AS code
+        FROM influencers ranked_influencers
+        WHERE ranked_influencers.company_id = influencers.company_id
+          AND ranked_influencers.archived_at IS NULL
+          AND ranked_influencers.coupon_code IS NOT NULL
+      ),
+      ranking_base AS (
+        SELECT
+          influencer_codes.influencer_id,
+          COALESCE(SUM(imported_orders.gross_amount), 0) AS sold_amount
+        FROM influencer_codes
+        INNER JOIN imported_orders
+          ON imported_orders.company_id = influencers.company_id
+          AND UPPER(imported_orders.coupon_code) = influencer_codes.code
+          AND imported_orders.status = 'paid'
+          AND EXTRACT(MONTH FROM imported_orders.ordered_at) = EXTRACT(MONTH FROM now())
+          AND EXTRACT(YEAR FROM imported_orders.ordered_at) = EXTRACT(YEAR FROM now())
+        GROUP BY influencer_codes.influencer_id
+      ),
+      ranked AS (
+        SELECT
+          influencer_id,
+          RANK() OVER (ORDER BY sold_amount DESC) AS position
+        FROM ranking_base
+      )
+      SELECT position
+      FROM ranked
+      WHERE influencer_id = influencers.id
+      LIMIT 1
+    ) monthly_ranking ON true
     WHERE influencers.company_id = ${input.companyId}
       AND (${input.includeArchived ?? false}::boolean OR influencers.archived_at IS NULL)
       AND (${input.status ?? null}::"InfluencerStatus" IS NULL OR influencers.status = ${input.status ?? null}::"InfluencerStatus")

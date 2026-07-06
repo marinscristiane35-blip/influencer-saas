@@ -22,14 +22,22 @@ export function InfluencerOperationalHero({
   canChangeStatus,
   canUpdate,
   currentMonthCommission,
+  currentMonthOrders,
+  currentMonthSold,
   influencer,
+  portalStatus,
+  rankingPosition,
   saldoDisponivel,
 }: {
   canArchive: boolean;
   canChangeStatus: boolean;
   canUpdate: boolean;
   currentMonthCommission: string;
+  currentMonthOrders: number;
+  currentMonthSold: string;
   influencer: InfluencerRow;
+  portalStatus: string | null;
+  rankingPosition: number | null;
   saldoDisponivel: string | null;
 }) {
   const initials = influencer.name
@@ -61,6 +69,9 @@ export function InfluencerOperationalHero({
               <span className="status-badge status-declined">Arquivado</span>
             ) : null}
             <span className="panel-chip">{influencer.coupon_code ?? "Sem cupom"}</span>
+            <span className="panel-chip">
+              Portal: {portalStatus === "active" ? "ativo" : portalStatus ?? "sem acesso"}
+            </span>
           </div>
         </div>
       </div>
@@ -68,6 +79,18 @@ export function InfluencerOperationalHero({
         <div>
           <span>Comissao do mes</span>
           <strong>{money(currentMonthCommission)}</strong>
+        </div>
+        <div>
+          <span>Vendido no mes</span>
+          <strong>{money(currentMonthSold)}</strong>
+        </div>
+        <div>
+          <span>Pedidos do mes</span>
+          <strong>{currentMonthOrders}</strong>
+        </div>
+        <div>
+          <span>Ranking mensal</span>
+          <strong>{rankingPosition ? `#${rankingPosition}` : "-"}</strong>
         </div>
         <div>
           <span>Saldo disponivel</span>
