@@ -6,6 +6,7 @@ export type SessionPayload = {
   userId?: string;
   companyId?: string;
   influencerId?: string;
+  portalAccountId?: string;
   role: string;
   expiresAt: number;
 };

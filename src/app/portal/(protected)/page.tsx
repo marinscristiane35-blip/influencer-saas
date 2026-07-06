@@ -1,51 +1,45 @@
+﻿import { PortalCampaignCards } from "@/components/portal/portal-campaign-cards";
+import { PortalHero } from "@/components/portal/portal-hero";
+import { PortalMetricCards } from "@/components/portal/portal-metric-cards";
+import { PortalMonthlyHistory } from "@/components/portal/portal-monthly-history";
+import { PortalOrdersTable } from "@/components/portal/portal-orders-table";
 import { requireInfluencer } from "@/lib/auth/guards";
-
-const statusLabels = {
-  active: "Ativo",
-  invited: "Convidado",
-  paused: "Pausado",
-  declined: "Recusado",
-} as const;
+import { getPortalDashboardViewModel } from "@/lib/portal/dashboard-view-model";
 
 export default async function PortalHomePage() {
   const context = await requireInfluencer();
-
-  const cards = [
-    { detail: "Em breve", label: "Campanhas", value: "0" },
-    { detail: "Resultados consolidados", label: "Resultados", value: "0" },
-    { detail: "Saldo previsto", label: "Carteira", value: "R$ 0,00" },
-  ];
+  const viewModel = await getPortalDashboardViewModel({
+    companyId: context.companyId,
+    influencerId: context.influencerId,
+  });
+  const activeCampaigns = viewModel.campaigns.filter(
+    (campaign) => campaign.status === "active",
+  );
 
   return (
     <>
-      <section className="page-heading">
-        <p className="eyebrow">{context.companyName}</p>
-        <h2>Resumo do portal</h2>
-        <p className="muted">
-          Acompanhe suas campanhas, links, resultados e carteira quando os
-          modulos forem ativados pela empresa.
-        </p>
-      </section>
+      <PortalHero
+        commission={viewModel.currentMonthCommission}
+        coupon={viewModel.primaryCoupon}
+        insight={viewModel.insight}
+        name={context.influencer.name}
+        ordersCount={Number(viewModel.currentMonth.orders_count)}
+        soldAmount={viewModel.currentMonth.gross_amount}
+      />
 
-      <section className="metric-grid">
-        <article className="metric-card">
-          <p>Empresa vinculada</p>
-          <div className="metric">{context.companyName}</div>
-          <span>{context.companySlug}</span>
-        </article>
-        <article className="metric-card">
-          <p>Status</p>
-          <div className="metric">{statusLabels[context.influencer.status]}</div>
-          <span>Acesso individual do influenciador</span>
-        </article>
-        {cards.map((card) => (
-          <article className="metric-card" key={card.label}>
-            <p>{card.label}</p>
-            <div className="metric">{card.value}</div>
-            <span>{card.detail}</span>
-          </article>
-        ))}
-      </section>
+      <PortalMetricCards
+        availableBalance={viewModel.statement.wallet.available_balance}
+        currentMonthSold={viewModel.currentMonth.gross_amount}
+        primaryCoupon={viewModel.primaryCoupon}
+        rankingPosition={
+          viewModel.ranking ? Number(viewModel.ranking.position) : null
+        }
+        totalCommission={viewModel.totalCommission}
+      />
+
+      <PortalCampaignCards campaigns={activeCampaigns} />
+      <PortalMonthlyHistory history={viewModel.monthlyHistory} />
+      <PortalOrdersTable orders={viewModel.recentOrders} />
     </>
   );
 }

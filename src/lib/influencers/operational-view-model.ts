@@ -1,6 +1,7 @@
 import "server-only";
 
 import { canCompany } from "@/lib/auth/permissions";
+import { listCampaignsForInfluencer } from "@/lib/campaigns/repository";
 import { findInfluencerByCompany } from "@/lib/influencers/repository";
 import { listInfluencerTimelineEvents } from "@/lib/influencers/timeline-repository";
 import {
@@ -28,15 +29,22 @@ export async function getInfluencerOperationalViewModel(input: {
     canArchive: canCompany(input.permissions, "influencers:archive"),
     canChangeStatus: canCompany(input.permissions, "influencers:status"),
     canUpdate: canCompany(input.permissions, "influencers:update"),
+    canViewCampaigns: canCompany(input.permissions, "campaigns:view"),
     canViewFinance: canCompany(input.permissions, "finance:view_sensitive"),
   };
 
-  const [timelineEvents, financial] = await Promise.all([
+  const [timelineEvents, linkedCampaigns, financial] = await Promise.all([
     listInfluencerTimelineEvents({
       companyId: input.companyId,
       influencerId: influencer.id,
       limit: 20,
     }),
+    permissions.canViewCampaigns
+      ? listCampaignsForInfluencer({
+          companyId: input.companyId,
+          influencerId: influencer.id,
+        })
+      : Promise.resolve([]),
     permissions.canViewFinance
       ? Promise.all([
           getInfluencerWalletStatement({
@@ -79,6 +87,7 @@ export async function getInfluencerOperationalViewModel(input: {
     averageTicket,
     currentMonthCommission,
     influencer,
+    linkedCampaigns,
     permissions,
     recentCommissions,
     recentOrders,

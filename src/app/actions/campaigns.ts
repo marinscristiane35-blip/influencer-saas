@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createCampaign } from "@/lib/campaigns/repository";
+import {
+  createCampaign,
+  linkInfluencerToCampaign,
+  unlinkInfluencerFromCampaign,
+} from "@/lib/campaigns/repository";
 import { requireCompanyPermission } from "@/lib/tenant/context";
 
 const campaignSchema = z
@@ -29,6 +33,11 @@ const campaignSchema = z
       path: ["endsAt"],
     },
   );
+
+const campaignInfluencerSchema = z.object({
+  campaignId: z.string().trim().min(1, "Campanha invalida."),
+  influencerId: z.string().trim().min(1, "Influenciador invalido."),
+});
 
 function emptyToNull(value?: string) {
   return value && value.length > 0 ? value : null;
@@ -80,4 +89,54 @@ export async function createCampaignAction(_: unknown, formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/campanhas");
   return { success: "Campanha cadastrada." };
+}
+
+export async function linkCampaignInfluencerAction(
+  _: unknown,
+  formData: FormData,
+) {
+  const tenant = await requireCompanyPermission("campaigns:manage");
+  const parsed = campaignInfluencerSchema.safeParse({
+    campaignId: formData.get("campaignId"),
+    influencerId: formData.get("influencerId"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos." };
+  }
+
+  const link = await linkInfluencerToCampaign({
+    campaignId: parsed.data.campaignId,
+    companyId: tenant.companyId,
+    influencerId: parsed.data.influencerId,
+  });
+
+  if (!link) {
+    return { error: "Nao foi possivel vincular neste tenant." };
+  }
+
+  revalidatePath("/dashboard/campanhas");
+  revalidatePath("/portal/campanhas");
+  return { success: "Influenciador vinculado a campanha." };
+}
+
+export async function unlinkCampaignInfluencerAction(formData: FormData) {
+  const tenant = await requireCompanyPermission("campaigns:manage");
+  const parsed = campaignInfluencerSchema.safeParse({
+    campaignId: formData.get("campaignId"),
+    influencerId: formData.get("influencerId"),
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await unlinkInfluencerFromCampaign({
+    campaignId: parsed.data.campaignId,
+    companyId: tenant.companyId,
+    influencerId: parsed.data.influencerId,
+  });
+
+  revalidatePath("/dashboard/campanhas");
+  revalidatePath("/portal/campanhas");
 }

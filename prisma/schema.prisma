@@ -111,6 +111,18 @@ enum OrderImportSource {
   spreadsheet
 }
 
+enum InfluencerPortalAccountStatus {
+  active
+  inactive
+}
+
+enum CampaignInfluencerStatus {
+  invited
+  active
+  paused
+  finished
+}
+
 model Company {
   id        String        @id @default(cuid())
   name      String
@@ -131,6 +143,8 @@ model Company {
   commissionEvents CommissionEvent[]
   importedOrders ImportedOrder[]
   influencerTimelineEvents InfluencerTimelineEvent[]
+  influencerPortalAccounts InfluencerPortalAccount[]
+  campaignInfluencers CampaignInfluencer[]
 
   @@map("companies")
 }
@@ -170,6 +184,8 @@ model Influencer {
   coupons InfluencerCoupon[]
   commissionEvents CommissionEvent[]
   timelineEvents InfluencerTimelineEvent[]
+  portalAccount InfluencerPortalAccount?
+  campaignLinks CampaignInfluencer[]
 
   @@unique([companyId, email])
   @@unique([companyId, instagram])
@@ -214,11 +230,52 @@ model Campaign {
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  influencerLinks CampaignInfluencer[]
 
   @@index([companyId, status])
   @@index([companyId, startsAt])
   @@index([companyId, createdAt])
   @@map("campaigns")
+}
+
+model InfluencerPortalAccount {
+  id           String                        @id @default(cuid())
+  companyId    String                        @map("company_id")
+  influencerId String                        @unique @map("influencer_id")
+  email        String
+  passwordHash String                        @map("password_hash")
+  status       InfluencerPortalAccountStatus @default(active)
+  lastLoginAt  DateTime?                     @map("last_login_at")
+  createdAt    DateTime                      @default(now()) @map("created_at")
+  updatedAt    DateTime                      @updatedAt @map("updated_at")
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, email])
+  @@unique([companyId, influencerId])
+  @@index([companyId, status])
+  @@map("influencer_portal_accounts")
+}
+
+model CampaignInfluencer {
+  id           String                   @id @default(cuid())
+  companyId    String                   @map("company_id")
+  campaignId   String                   @map("campaign_id")
+  influencerId String                   @map("influencer_id")
+  status       CampaignInfluencerStatus @default(active)
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @updatedAt @map("updated_at")
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  influencer Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, campaignId, influencerId])
+  @@index([companyId, campaignId])
+  @@index([companyId, influencerId])
+  @@index([companyId, status])
+  @@map("campaign_influencers")
 }
 
 model WalletAccount {

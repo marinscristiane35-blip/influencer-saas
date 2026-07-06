@@ -6,15 +6,14 @@ import { createSession, destroySession } from "@/lib/auth/session";
 import { verifyPassword } from "@/lib/auth/password";
 import { normalizeEmail } from "@/lib/auth/email";
 import { prisma } from "@/lib/database/prisma";
-import { findInfluencerForLogin } from "@/lib/influencers/repository";
+import {
+  listInfluencerPortalAccountsForLogin,
+  updateInfluencerPortalAccountLastLogin,
+} from "@/lib/influencers/portal-account-repository";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-});
-
-const influencerLoginSchema = z.object({
-  email: z.string().email(),
 });
 
 function getAllowedSaasAdminEmails() {
@@ -62,6 +61,8 @@ export async function companyLoginAction(_: unknown, formData: FormData) {
     return { error: "Usuario sem empresa ativa." };
   }
 
+  await destroySession("saas_admin");
+  await destroySession("influencer");
   await createSession({
     sessionType: "company_user",
     userId: user.id,
@@ -101,6 +102,8 @@ export async function saasAdminLoginAction(_: unknown, formData: FormData) {
     return { error: "Credenciais invalidas." };
   }
 
+  await destroySession("company_user");
+  await destroySession("influencer");
   await createSession({
     sessionType: "saas_admin",
     userId: user.id,
@@ -126,23 +129,52 @@ export async function saasAdminLogoutAction() {
 }
 
 export async function influencerLoginAction(_: unknown, formData: FormData) {
-  const parsed = influencerLoginSchema.safeParse({
+  const parsed = loginSchema.safeParse({
     email: formData.get("email"),
+    password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { error: "Informe um e-mail valido." };
+    return { error: "Informe e-mail e senha validos." };
   }
 
-  const influencer = await findInfluencerForLogin(normalizeEmail(parsed.data.email));
+  const accounts = await listInfluencerPortalAccountsForLogin(
+    normalizeEmail(parsed.data.email),
+  );
+  const matchingAccounts = [];
 
-  if (!influencer) {
-    return { error: "Influenciador nao encontrado ou sem acesso ao portal." };
+  for (const account of accounts) {
+    if (
+      account.status !== "active" ||
+      account.influencer_status === "paused" ||
+      account.influencer_status === "declined" ||
+      account.influencer_archived_at
+    ) {
+      continue;
+    }
+
+    if (await verifyPassword(parsed.data.password, account.password_hash)) {
+      matchingAccounts.push(account);
+    }
   }
 
+  const account = matchingAccounts.length === 1 ? matchingAccounts[0] : null;
+
+  if (!account) {
+    return { error: "Credenciais invalidas." };
+  }
+
+  await updateInfluencerPortalAccountLastLogin({
+    accountId: account.id,
+    companyId: account.company_id,
+  });
+
+  await destroySession("company_user");
+  await destroySession("saas_admin");
   await createSession({
-    companyId: influencer.company_id,
-    influencerId: influencer.id,
+    companyId: account.company_id,
+    influencerId: account.influencer_id,
+    portalAccountId: account.id,
     role: "influencer",
     sessionType: "influencer",
   });

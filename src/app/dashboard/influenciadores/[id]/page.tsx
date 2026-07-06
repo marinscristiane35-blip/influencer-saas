@@ -1,6 +1,7 @@
 import { InfluencerCommissionsTable } from "@/components/influencers/influencer-commissions-table";
 import { InfluencerFinancialCards } from "@/components/influencers/influencer-financial-cards";
 import { InfluencerFutureBlocks } from "@/components/influencers/influencer-future-blocks";
+import { InfluencerLinkedCampaigns } from "@/components/influencers/influencer-linked-campaigns";
 import { InfluencerNotFound } from "@/components/influencers/influencer-not-found";
 import { InfluencerOperationalHero } from "@/components/influencers/influencer-operational-hero";
 import { InfluencerOrdersTable } from "@/components/influencers/influencer-orders-table";
@@ -34,6 +35,7 @@ export default async function InfluencerProfilePage({
     averageTicket,
     currentMonthCommission,
     influencer,
+    linkedCampaigns,
     permissions,
     recentCommissions,
     recentOrders,
@@ -81,6 +83,11 @@ export default async function InfluencerProfilePage({
           influencer={influencer}
         />
       </div>
+
+      <InfluencerLinkedCampaigns
+        campaigns={linkedCampaigns}
+        canViewCampaigns={permissions.canViewCampaigns}
+      />
 
       <InfluencerFutureBlocks />
     </>

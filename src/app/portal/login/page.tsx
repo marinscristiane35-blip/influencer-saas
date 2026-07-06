@@ -7,8 +7,8 @@ export default function PortalLoginPage() {
         <p className="eyebrow">Portal do influenciador</p>
         <h1>Entrar no portal</h1>
         <p className="muted">
-          Use o e-mail cadastrado pela empresa para acessar campanhas,
-          resultados e carteira.
+          Use o e-mail e a senha definidos pela empresa para acessar campanhas,
+          cupons, resultados e carteira.
         </p>
         <InfluencerLoginForm />
       </section>

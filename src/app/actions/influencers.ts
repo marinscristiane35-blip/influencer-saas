@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { normalizeEmail } from "@/lib/auth/email";
+import { hashPassword } from "@/lib/auth/password";
 import {
   createInfluencerCoupon,
   syncInfluencerPrimaryCoupon,
 } from "@/lib/financial/repository";
+import { upsertInfluencerPortalAccount } from "@/lib/influencers/portal-account-repository";
 import {
   archiveInfluencer,
   createInfluencer,
@@ -33,6 +35,13 @@ const influencerSchema = z.object({
 const timelineNoteSchema = z.object({
   description: z.string().trim().min(3, "Escreva uma observacao."),
   influencerId: z.string().trim().min(1, "Influenciador invalido."),
+});
+
+const portalAccountSchema = z.object({
+  email: z.string().trim().email("Informe um e-mail valido."),
+  influencerId: z.string().trim().min(1, "Influenciador invalido."),
+  password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
+  status: z.enum(["active", "inactive"]),
 });
 
 function emptyToNull(value?: string) {
@@ -314,4 +323,67 @@ export async function createInfluencerNoteAction(_: unknown, formData: FormData)
 
   revalidatePath(`/dashboard/influenciadores/${influencer.id}`);
   return { success: "Observacao adicionada." };
+}
+
+export async function upsertInfluencerPortalAccountAction(
+  _: unknown,
+  formData: FormData,
+) {
+  const tenant = await requireCompanyPermission("influencers:update");
+  const parsed = portalAccountSchema.safeParse({
+    email: formData.get("email"),
+    influencerId: formData.get("influencerId"),
+    password: formData.get("password"),
+    status: formData.get("status"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados invalidos." };
+  }
+
+  const influencer = await findInfluencerByCompany({
+    companyId: tenant.companyId,
+    influencerId: parsed.data.influencerId,
+  });
+
+  if (!influencer) {
+    return { error: "Influenciador nao encontrado neste tenant." };
+  }
+
+  let account;
+
+  try {
+    account = await upsertInfluencerPortalAccount({
+      companyId: tenant.companyId,
+      email: normalizeEmail(parsed.data.email),
+      influencerId: influencer.id,
+      passwordHash: await hashPassword(parsed.data.password),
+      status: parsed.data.status,
+    });
+  } catch {
+    return {
+      error:
+        "Nao foi possivel salvar a conta. Verifique se este e-mail ja esta em uso nesta empresa.",
+    };
+  }
+
+  if (!account) {
+    return { error: "Nao foi possivel salvar a conta do portal." };
+  }
+
+  await createInfluencerTimelineEvent({
+    companyId: tenant.companyId,
+    description: "Conta de acesso ao portal criada ou atualizada.",
+    influencerId: influencer.id,
+    metadata: {
+      email: account.email,
+      status: account.status,
+    },
+    title: "Conta do portal atualizada",
+    type: "portal_account_update",
+    userId: tenant.userId,
+  });
+
+  revalidatePath(`/dashboard/influenciadores/${influencer.id}`);
+  return { success: "Conta do portal salva." };
 }

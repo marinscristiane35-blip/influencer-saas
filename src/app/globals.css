@@ -320,6 +320,32 @@ h2 {
   padding: 22px;
 }
 
+.action-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.action-card {
+  background: #f8faf6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  text-decoration: none;
+}
+
+.action-card:hover {
+  border-color: #bec8bd;
+  box-shadow: 0 10px 22px rgba(31, 37, 35, 0.06);
+}
+
+.action-card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .step-list {
   display: grid;
   gap: 10px;
@@ -561,6 +587,9 @@ h2 {
 }
 
 .login-page {
+  background:
+    linear-gradient(135deg, rgba(246, 248, 242, 0.92), rgba(255, 255, 255, 0.96)),
+    #f7f8f3;
   display: grid;
   min-height: 100vh;
   place-items: center;
@@ -572,6 +601,7 @@ h2 {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(31, 37, 35, 0.08);
   padding: 28px;
 }
 
@@ -800,6 +830,150 @@ h2 {
   padding-left: 10px;
 }
 
+.portal-hero {
+  align-items: stretch;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 430px);
+  padding: 24px;
+}
+
+.portal-hero h2 {
+  color: #1f251f;
+  font-size: 36px;
+  line-height: 1.05;
+  margin: 8px 0;
+}
+
+.portal-hero p {
+  color: #665f57;
+  margin: 0;
+  max-width: 620px;
+}
+
+.portal-coupon {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  display: inline-flex;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 10px 12px;
+}
+
+.portal-coupon span,
+.portal-main-grid span,
+.portal-campaign-card span,
+.portal-history-card span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.portal-coupon strong {
+  color: #9a3412;
+  font-size: 18px;
+}
+
+.portal-main-card {
+  background: #f97316;
+  border-radius: 8px;
+  color: #ffffff;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.portal-main-card .eyebrow,
+.portal-main-card p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.portal-main-card .panel-heading {
+  align-items: start;
+}
+
+.portal-main-card .panel-heading strong {
+  display: block;
+  font-size: 34px;
+  line-height: 1.05;
+  margin-top: 6px;
+}
+
+.portal-main-card .secondary-button {
+  background: #ffffff;
+  color: #9a3412;
+}
+
+.portal-main-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.portal-main-grid div,
+.portal-campaign-card,
+.portal-history-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.portal-main-grid div {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.portal-main-grid span {
+  color: rgba(255, 255, 255, 0.75);
+  display: block;
+}
+
+.portal-main-grid strong {
+  display: block;
+  font-size: 20px;
+  margin-top: 6px;
+}
+
+.portal-campaign-grid,
+.portal-history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.portal-campaign-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.portal-campaign-card,
+.portal-history-card {
+  display: grid;
+  gap: 12px;
+}
+
+.portal-campaign-card > strong {
+  font-size: 18px;
+}
+
+.portal-campaign-card p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.portal-campaign-card div,
+.portal-history-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.portal-history-list {
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+}
+
 .timeline-list {
   display: grid;
   gap: 10px;
@@ -850,7 +1024,10 @@ h2 {
 
   .operational-hero,
   .hero-metrics,
-  .influencer-row-metrics {
+  .influencer-row-metrics,
+  .portal-hero,
+  .portal-campaign-grid,
+  .portal-history-list {
     grid-template-columns: 1fr;
   }
 
